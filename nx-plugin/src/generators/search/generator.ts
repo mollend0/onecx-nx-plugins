@@ -110,9 +110,8 @@ export async function searchGenerator(
     ? apiModelPascal
     : apiModelPascal + 's';
 
-  const isNgRx = !!Object.keys(
-    readJson(tree, 'package.json').dependencies
-  ).find((k) => k.includes('@ngrx/'));
+  const packageJson = readJson(tree, 'package.json');
+  const isNgRx = !!Object.values(packageJson.dependencies || {}).toString().includes('@ngrx/');
   if (!isNgRx) {
     spinner.fail('Currently only NgRx projects are supported.');
     throw new Error('Currently only NgRx projects are supported.');
@@ -132,12 +131,8 @@ export async function searchGenerator(
   }
 
   // get workspace name to be used for unique ids in UI elements
-  const projectConfig = tree.read('project.json');
-  let workspaceName = '';
-  if (projectConfig) {
-    const projectJson = JSON.parse(projectConfig.toString());
-    workspaceName = projectJson.name; // or the relevant property
-  }
+  const projectJson = readJson(tree, 'project.json');
+  const workspaceName = projectJson.name || '';
 
   generateFiles(
     tree,
@@ -165,7 +160,7 @@ export async function searchGenerator(
   );
 
   const generatorProcessor = new GeneratorProcessor();
-  if(options.standalone){
+  if (options.standalone) {
     generatorProcessor.addStep(new AppModuleStep());
   }
   generatorProcessor.addStep(new AppReducerStep());
